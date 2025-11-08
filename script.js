@@ -975,7 +975,7 @@ function initRegistration() {
 // Fonction pour charger l'application principale
 function loadMainApp() {
   // Votre code de chargement existant ici
-  const BASE = "https://script.google.com/macros/s/AKfycbyRHCuLb0IC_fLpQs36UW_zzgnwmDHAJtDZHByZjz3rxHieXr-Xw54yt5NvCEZgzk64xQ/exec";
+  const BASE = "https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec";
   const logoUrlAPI = BASE + "?page=logo";
   const dataUrlAPI = BASE + "?page=api";
 
