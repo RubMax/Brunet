@@ -879,49 +879,25 @@ function loadAgents() {
 
 // Fonction pour enregistrer le client
 function registerClient(clientData) {
-  // Récupération des champs HTML
-  const nomInput = document.getElementById("nom");
-  const telInput = document.getElementById("tel");
-  const emailInput = document.getElementById("email");
-  const agentSelect = document.getElementById("agent");
-
-  // Réinitialiser les styles à chaque tentative
-  [nomInput, telInput, emailInput, agentSelect].forEach(el => {
-    el.style.border = "1px solid #ccc";
-    el.style.backgroundColor = "white";
-  });
-
-  // 🧩 Vérifications locales
+  // 🧩 Vérifications avant l'envoi
   if (!clientData.nom || clientData.nom.trim() === "") {
-    nomInput.style.border = "2px solid red";
-    nomInput.style.backgroundColor = "#ffe5e5";
-    nomInput.focus();
-    showTempMessage("⚠️ Veuillez entrer votre nom.");
-    return Promise.resolve({ success: false });
+    alert("⚠️ Veuillez entrer votre nom.");
+    return Promise.resolve({ success: false, message: "Nom manquant" });
   }
 
   if (!clientData.tel || clientData.tel.trim().length < 8) {
-    telInput.style.border = "2px solid red";
-    telInput.style.backgroundColor = "#ffe5e5";
-    telInput.focus();
-    showTempMessage("📱 Numéro de téléphone invalide (minimum 8 chiffres).");
-    return Promise.resolve({ success: false });
+    alert("📱 Le numéro de téléphone est invalide (minimum 8 chiffres).");
+    return Promise.resolve({ success: false, message: "Téléphone invalide" });
   }
 
   if (!clientData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientData.email)) {
-    emailInput.style.border = "2px solid red";
-    emailInput.style.backgroundColor = "#ffe5e5";
-    emailInput.focus();
-    showTempMessage("✉️ Veuillez entrer une adresse e-mail valide.");
-    return Promise.resolve({ success: false });
+    alert("✉️ Veuillez entrer une adresse e-mail valide.");
+    return Promise.resolve({ success: false, message: "Email invalide" });
   }
 
   if (!clientData.agent || clientData.agent.trim() === "") {
-    agentSelect.style.border = "2px solid red";
-    agentSelect.style.backgroundColor = "#ffe5e5";
-    agentSelect.focus();
-    showTempMessage("👤 Veuillez sélectionner un agent.");
-    return Promise.resolve({ success: false });
+    alert("👤 Veuillez sélectionner un agent.");
+    return Promise.resolve({ success: false, message: "Agent manquant" });
   }
 
   // ✅ Si toutes les infos sont correctes → on envoie à Google Apps Script
@@ -937,19 +913,20 @@ function registerClient(clientData) {
     .then(response => response.json())
     .then(result => {
       if (result.success) {
-        // 🧠 Enregistrement local
+        // 🧠 Enregistrement local pour ne plus redemander
         localStorage.setItem("clientRegistered", "true");
         localStorage.setItem("clientData", JSON.stringify(clientData));
-        showTempMessage("✅ Enregistrement réussi !", "success");
+        alert("✅ Enregistrement réussi !");
+        console.log(result.message);
         return { success: true };
       } else {
-        showTempMessage("❌ " + (result.message || "Erreur serveur"));
+        alert("❌ " + (result.message || "Erreur lors de l'enregistrement"));
         throw new Error(result.message || "Erreur lors de l'enregistrement");
       }
     })
     .catch(error => {
       console.error("Erreur de requête:", error);
-      showTempMessage("⚠️ Problème réseau : " + error.message);
+      alert("⚠️ Erreur réseau ou problème serveur : " + error.message);
       return { success: false, message: error.message };
     });
 }
