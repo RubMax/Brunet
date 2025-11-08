@@ -857,7 +857,7 @@ let agentsList = [];
 
 // Fonction pour charger la liste des agents
 function loadAgents() {
-  const AGENTS_URL = "https://script.google.com/macros/s/AKfycbyRHCuLb0IC_fLpQs36UW_zzgnwmDHAJtDZHByZjz3rxHieXr-Xw54yt5NvCEZgzk64xQ/exec?action=getAgents";
+  const AGENTS_URL = "https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec?action=getAgents";
   
   fetch(AGENTS_URL)
     .then(response => response.json())
