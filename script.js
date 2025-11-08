@@ -879,21 +879,31 @@ function loadAgents() {
 
 // Fonction pour enregistrer le client
 function registerClient(clientData) {
-  const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec?action=saveClient&nom=${encodeURIComponent(clientData.nom)}&tel=${encodeURIComponent(clientData.tel)}&email=${encodeURIComponent(clientData.email)}&agent=${encodeURIComponent(clientData.agent)}`;
-  
+  const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
+    `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
+    `&tel=${encodeURIComponent(clientData.tel)}` +
+    `&email=${encodeURIComponent(clientData.email)}` +
+    `&agent=${encodeURIComponent(clientData.agent)}`;
+
   return fetch(SAVE_URL)
-    .then(response => response.json())
+    .then(response => response.text()) // <-- On lit du texte, pas du JSON
     .then(result => {
-      if (result.success) {
-        // Stocker les infos en localStorage
+      if (result.trim() === "OK") {
+        // ✅ Succès → On enregistre localement
         localStorage.setItem('clientRegistered', 'true');
         localStorage.setItem('clientData', JSON.stringify(clientData));
         return { success: true };
       } else {
-        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+        // ❌ Erreur venant du serveur
+        throw new Error(result || 'Erreur inconnue lors de l\'enregistrement');
       }
+    })
+    .catch(error => {
+      console.error('Erreur de requête:', error);
+      return { success: false, message: error.message };
     });
 }
+
 
 // Fonction pour vérifier si déjà enregistré
 function checkRegistration() {
