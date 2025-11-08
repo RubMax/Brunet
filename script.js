@@ -879,27 +879,77 @@ function loadAgents() {
 
 // Fonction pour enregistrer le client
 function registerClient(clientData) {
-  const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
-    `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
+  // Récupération des champs HTML
+  const nomInput = document.getElementById("nom");
+  const telInput = document.getElementById("tel");
+  const emailInput = document.getElementById("email");
+  const agentSelect = document.getElementById("agent");
+
+  // Réinitialiser les styles à chaque tentative
+  [nomInput, telInput, emailInput, agentSelect].forEach(el => {
+    el.style.border = "1px solid #ccc";
+    el.style.backgroundColor = "white";
+  });
+
+  // 🧩 Vérifications locales
+  if (!clientData.nom || clientData.nom.trim() === "") {
+    nomInput.style.border = "2px solid red";
+    nomInput.style.backgroundColor = "#ffe5e5";
+    nomInput.focus();
+    showTempMessage("⚠️ Veuillez entrer votre nom.");
+    return Promise.resolve({ success: false });
+  }
+
+  if (!clientData.tel || clientData.tel.trim().length < 8) {
+    telInput.style.border = "2px solid red";
+    telInput.style.backgroundColor = "#ffe5e5";
+    telInput.focus();
+    showTempMessage("📱 Numéro de téléphone invalide (minimum 8 chiffres).");
+    return Promise.resolve({ success: false });
+  }
+
+  if (!clientData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientData.email)) {
+    emailInput.style.border = "2px solid red";
+    emailInput.style.backgroundColor = "#ffe5e5";
+    emailInput.focus();
+    showTempMessage("✉️ Veuillez entrer une adresse e-mail valide.");
+    return Promise.resolve({ success: false });
+  }
+
+  if (!clientData.agent || clientData.agent.trim() === "") {
+    agentSelect.style.border = "2px solid red";
+    agentSelect.style.backgroundColor = "#ffe5e5";
+    agentSelect.focus();
+    showTempMessage("👤 Veuillez sélectionner un agent.");
+    return Promise.resolve({ success: false });
+  }
+
+  // ✅ Si toutes les infos sont correctes → on envoie à Google Apps Script
+  const SAVE_URL =
+    `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
+    `?action=saveClient` +
+    `&nom=${encodeURIComponent(clientData.nom)}` +
     `&tel=${encodeURIComponent(clientData.tel)}` +
     `&email=${encodeURIComponent(clientData.email)}` +
     `&agent=${encodeURIComponent(clientData.agent)}`;
 
   return fetch(SAVE_URL)
-    .then(response => response.json()) // 🔹 Ici, on lit du JSON
+    .then(response => response.json())
     .then(result => {
       if (result.success) {
-        // ✅ Succès → enregistrement local
-        localStorage.setItem('clientRegistered', 'true');
-        localStorage.setItem('clientData', JSON.stringify(clientData));
-        console.log(result.message);
+        // 🧠 Enregistrement local
+        localStorage.setItem("clientRegistered", "true");
+        localStorage.setItem("clientData", JSON.stringify(clientData));
+        showTempMessage("✅ Enregistrement réussi !", "success");
         return { success: true };
       } else {
-        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+        showTempMessage("❌ " + (result.message || "Erreur serveur"));
+        throw new Error(result.message || "Erreur lors de l'enregistrement");
       }
     })
     .catch(error => {
-      console.error('Erreur de requête:', error);
+      console.error("Erreur de requête:", error);
+      showTempMessage("⚠️ Problème réseau : " + error.message);
       return { success: false, message: error.message };
     });
 }
