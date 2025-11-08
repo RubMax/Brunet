@@ -10,7 +10,9 @@
     let currentImageIndex = 0;
     let imageUrls = [];
     
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener("DOMContentLoaded", () => {
+  // Initialiser le système d'enregistrement
+  initRegistration();
         const socialLinks = document.querySelector('.social-links');
     const pedDePage = document.getElementById('ped de page');
  if (socialLinks) socialLinks.remove();
