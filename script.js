@@ -886,16 +886,16 @@ function registerClient(clientData) {
     `&agent=${encodeURIComponent(clientData.agent)}`;
 
   return fetch(SAVE_URL)
-    .then(response => response.text()) // <-- On lit du texte, pas du JSON
+    .then(response => response.json()) // 🔹 Ici, on lit du JSON
     .then(result => {
-      if (result.trim() === "OK") {
-        // ✅ Succès → On enregistre localement
+      if (result.success) {
+        // ✅ Succès → enregistrement local
         localStorage.setItem('clientRegistered', 'true');
         localStorage.setItem('clientData', JSON.stringify(clientData));
+        console.log(result.message);
         return { success: true };
       } else {
-        // ❌ Erreur venant du serveur
-        throw new Error(result || 'Erreur inconnue lors de l\'enregistrement');
+        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
       }
     })
     .catch(error => {
