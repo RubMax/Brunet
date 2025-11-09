@@ -878,37 +878,36 @@ function loadAgents() {
 }
 
 function validateClientData(clientData) {
-  // Vérifier que tous les champs existent
   if (!clientData.nom || clientData.nom.trim().length < 2) {
-    return { valid: false, message: "Veuillez entrer un nom valide (minimum 2 caractères)." };
+    alert("⚠️ Veuillez entrer un nom valide (minimum 2 caractères).");
+    return false;
   }
 
-  // Vérifier le téléphone (seulement chiffres, minimum 8)
   const telRegex = /^[0-9]{8,15}$/;
   if (!telRegex.test(clientData.tel)) {
-    return { valid: false, message: "Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres)." };
+    alert("📞 Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres).");
+    return false;
   }
 
-  // Vérifier l'email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(clientData.email)) {
-    return { valid: false, message: "Veuillez entrer une adresse e-mail valide." };
+    alert("✉️ Veuillez entrer une adresse e-mail valide.");
+    return false;
   }
 
-  // Vérifier l'agent sélectionné
   if (!clientData.agent || clientData.agent === "Choisir un agent") {
-    return { valid: false, message: "Veuillez sélectionner un agent." };
+    alert("👤 Veuillez sélectionner un agent.");
+    return false;
   }
 
-  return { valid: true };
+  return true;
 }
 
-// Fonction pour enregistrer le client
 function registerClient(clientData) {
-  const validation = validateClientData(clientData);
-  if (!validation.valid) {
-    alert(validation.message);
-    return Promise.resolve({ success: false, message: validation.message });
+  // 🛑 Vérification avant l'envoi
+  if (!validateClientData(clientData)) {
+    console.warn("⛔ Données invalides, enregistrement annulé.");
+    return; // ❗ Stoppe ici, rien ne s’envoie
   }
 
   const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
@@ -917,21 +916,21 @@ function registerClient(clientData) {
     `&email=${encodeURIComponent(clientData.email)}` +
     `&agent=${encodeURIComponent(clientData.agent)}`;
 
-  return fetch(SAVE_URL)
+  fetch(SAVE_URL)
     .then(response => response.json())
     .then(result => {
       if (result.success) {
         localStorage.setItem('clientRegistered', 'true');
         localStorage.setItem('clientData', JSON.stringify(clientData));
+        alert("✅ Enregistrement réussi !");
         console.log(result.message);
-        return { success: true };
       } else {
-        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+        alert("❌ Erreur serveur : " + (result.message || "Réessayez plus tard."));
       }
     })
     .catch(error => {
-      console.error('Erreur de requête:', error);
-      return { success: false, message: error.message };
+      alert("🚫 Erreur de connexion : " + error.message);
+      console.error("Erreur de requête:", error);
     });
 }
 
