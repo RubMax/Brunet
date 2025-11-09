@@ -877,8 +877,40 @@ function loadAgents() {
     });
 }
 
+function validateClientData(clientData) {
+  // Vérifier que tous les champs existent
+  if (!clientData.nom || clientData.nom.trim().length < 2) {
+    return { valid: false, message: "Veuillez entrer un nom valide (minimum 2 caractères)." };
+  }
+
+  // Vérifier le téléphone (seulement chiffres, minimum 8)
+  const telRegex = /^[0-9]{8,15}$/;
+  if (!telRegex.test(clientData.tel)) {
+    return { valid: false, message: "Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres)." };
+  }
+
+  // Vérifier l'email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(clientData.email)) {
+    return { valid: false, message: "Veuillez entrer une adresse e-mail valide." };
+  }
+
+  // Vérifier l'agent sélectionné
+  if (!clientData.agent || clientData.agent === "Choisir un agent") {
+    return { valid: false, message: "Veuillez sélectionner un agent." };
+  }
+
+  return { valid: true };
+}
+
 // Fonction pour enregistrer le client
 function registerClient(clientData) {
+  const validation = validateClientData(clientData);
+  if (!validation.valid) {
+    alert(validation.message);
+    return Promise.resolve({ success: false, message: validation.message });
+  }
+
   const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
     `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
     `&tel=${encodeURIComponent(clientData.tel)}` +
@@ -886,10 +918,9 @@ function registerClient(clientData) {
     `&agent=${encodeURIComponent(clientData.agent)}`;
 
   return fetch(SAVE_URL)
-    .then(response => response.json()) // 🔹 Ici, on lit du JSON
+    .then(response => response.json())
     .then(result => {
       if (result.success) {
-        // ✅ Succès → enregistrement local
         localStorage.setItem('clientRegistered', 'true');
         localStorage.setItem('clientData', JSON.stringify(clientData));
         console.log(result.message);
