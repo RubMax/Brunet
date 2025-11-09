@@ -877,63 +877,30 @@ function loadAgents() {
     });
 }
 
-// === GESTION POPUP MODERNE ===
-
-
-// === VALIDATION DES DONNÉES ===
-function validateClientData(clientData) {
-  if (!clientData.nom || clientData.nom.trim().length < 2) {
-    showMessage("⚠️ Veuillez entrer un nom valide (minimum 2 caractères).");
-    return false;
-  }
-
-  const telRegex = /^[0-9]{8,15}$/;
-  if (!telRegex.test(clientData.tel)) {
-    showMessage("📞 Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres).");
-    return false;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(clientData.email)) {
-    showMessage("✉️ Veuillez entrer une adresse e-mail valide.");
-    return false;
-  }
-
-  if (!clientData.agent || clientData.agent === "Choisir un agent") {
-    showMessage("👤 Veuillez sélectionner un agent.");
-    return false;
-  }
-
-  return true;
-}
-
-// === ENREGISTREMENT CLIENT ===
+// Fonction pour enregistrer le client
 function registerClient(clientData) {
-  if (!validateClientData(clientData)) return;
-
   const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
     `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
     `&tel=${encodeURIComponent(clientData.tel)}` +
     `&email=${encodeURIComponent(clientData.email)}` +
     `&agent=${encodeURIComponent(clientData.agent)}`;
 
-  fetch(SAVE_URL)
-    .then(response => response.json())
+  return fetch(SAVE_URL)
+    .then(response => response.json()) // 🔹 Ici, on lit du JSON
     .then(result => {
       if (result.success) {
+        // ✅ Succès → enregistrement local
         localStorage.setItem('clientRegistered', 'true');
         localStorage.setItem('clientData', JSON.stringify(clientData));
-        showMessage("✅ Enregistrement réussi !", () => {
-          // Fermer le popup après confirmation
-          document.getElementById('popup').style.display = 'none';
-        });
+        console.log(result.message);
+        return { success: true };
       } else {
-        showMessage("❌ Erreur serveur : " + (result.message || "Réessayez plus tard."));
+        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
       }
     })
     .catch(error => {
-      showMessage("🚫 Erreur de connexion : " + error.message);
-      console.error("Erreur de requête:", error);
+      console.error('Erreur de requête:', error);
+      return { success: false, message: error.message };
     });
 }
 
