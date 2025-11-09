@@ -878,19 +878,7 @@ function loadAgents() {
 }
 
 // === GESTION POPUP MODERNE ===
-function showMessage(msg, callback = null) {
-  const box = document.getElementById('messageBox');
-  const text = document.getElementById('messageText');
-  const btn = document.getElementById('messageBtn');
 
-  text.textContent = msg;
-  box.classList.remove('hidden');
-
-  btn.onclick = () => {
-    box.classList.add('hidden');
-    if (callback) callback(); // si on veut exécuter une action après fermeture
-  };
-}
 
 // === VALIDATION DES DONNÉES ===
 function validateClientData(clientData) {
