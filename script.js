@@ -879,54 +879,27 @@ function loadAgents() {
 
 // Fonction pour enregistrer le client
 function registerClient(clientData) {
-  // 🧩 Vérifications avant l'envoi
-  if (!clientData.nom || clientData.nom.trim() === "") {
-    alert("⚠️ Veuillez entrer votre nom.");
-    return Promise.resolve({ success: false, message: "Nom manquant" });
-  }
-
-  if (!clientData.tel || clientData.tel.trim().length < 8) {
-    alert("📱 Le numéro de téléphone est invalide (minimum 8 chiffres).");
-    return Promise.resolve({ success: false, message: "Téléphone invalide" });
-  }
-
-  if (!clientData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientData.email)) {
-    alert("✉️ Veuillez entrer une adresse e-mail valide.");
-    return Promise.resolve({ success: false, message: "Email invalide" });
-  }
-
-  if (!clientData.agent || clientData.agent.trim() === "") {
-    alert("👤 Veuillez sélectionner un agent.");
-    return Promise.resolve({ success: false, message: "Agent manquant" });
-  }
-
-  // ✅ Si toutes les infos sont correctes → on envoie à Google Apps Script
-  const SAVE_URL =
-    `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
-    `?action=saveClient` +
-    `&nom=${encodeURIComponent(clientData.nom)}` +
+  const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
+    `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
     `&tel=${encodeURIComponent(clientData.tel)}` +
     `&email=${encodeURIComponent(clientData.email)}` +
     `&agent=${encodeURIComponent(clientData.agent)}`;
 
   return fetch(SAVE_URL)
-    .then(response => response.json())
+    .then(response => response.json()) // 🔹 Ici, on lit du JSON
     .then(result => {
       if (result.success) {
-        // 🧠 Enregistrement local pour ne plus redemander
-        localStorage.setItem("clientRegistered", "true");
-        localStorage.setItem("clientData", JSON.stringify(clientData));
-        alert("✅ Enregistrement réussi !");
+        // ✅ Succès → enregistrement local
+        localStorage.setItem('clientRegistered', 'true');
+        localStorage.setItem('clientData', JSON.stringify(clientData));
         console.log(result.message);
         return { success: true };
       } else {
-        alert("❌ " + (result.message || "Erreur lors de l'enregistrement"));
-        throw new Error(result.message || "Erreur lors de l'enregistrement");
+        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
       }
     })
     .catch(error => {
-      console.error("Erreur de requête:", error);
-      alert("⚠️ Erreur réseau ou problème serveur : " + error.message);
+      console.error('Erreur de requête:', error);
       return { success: false, message: error.message };
     });
 }
