@@ -877,38 +877,51 @@ function loadAgents() {
     });
 }
 
+// === GESTION POPUP MODERNE ===
+function showMessage(msg, callback = null) {
+  const box = document.getElementById('messageBox');
+  const text = document.getElementById('messageText');
+  const btn = document.getElementById('messageBtn');
+
+  text.textContent = msg;
+  box.classList.remove('hidden');
+
+  btn.onclick = () => {
+    box.classList.add('hidden');
+    if (callback) callback(); // si on veut exécuter une action après fermeture
+  };
+}
+
+// === VALIDATION DES DONNÉES ===
 function validateClientData(clientData) {
   if (!clientData.nom || clientData.nom.trim().length < 2) {
-    alert("⚠️ Veuillez entrer un nom valide (minimum 2 caractères).");
+    showMessage("⚠️ Veuillez entrer un nom valide (minimum 2 caractères).");
     return false;
   }
 
   const telRegex = /^[0-9]{8,15}$/;
   if (!telRegex.test(clientData.tel)) {
-    alert("📞 Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres).");
+    showMessage("📞 Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres).");
     return false;
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(clientData.email)) {
-    alert("✉️ Veuillez entrer une adresse e-mail valide.");
+    showMessage("✉️ Veuillez entrer une adresse e-mail valide.");
     return false;
   }
 
   if (!clientData.agent || clientData.agent === "Choisir un agent") {
-    alert("👤 Veuillez sélectionner un agent.");
+    showMessage("👤 Veuillez sélectionner un agent.");
     return false;
   }
 
   return true;
 }
 
+// === ENREGISTREMENT CLIENT ===
 function registerClient(clientData) {
-  // 🛑 Vérification avant l'envoi
-  if (!validateClientData(clientData)) {
-    console.warn("⛔ Données invalides, enregistrement annulé.");
-    return; // ❗ Stoppe ici, rien ne s’envoie
-  }
+  if (!validateClientData(clientData)) return;
 
   const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
     `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
@@ -922,14 +935,16 @@ function registerClient(clientData) {
       if (result.success) {
         localStorage.setItem('clientRegistered', 'true');
         localStorage.setItem('clientData', JSON.stringify(clientData));
-        alert("✅ Enregistrement réussi !");
-        console.log(result.message);
+        showMessage("✅ Enregistrement réussi !", () => {
+          // Fermer le popup après confirmation
+          document.getElementById('popup').style.display = 'none';
+        });
       } else {
-        alert("❌ Erreur serveur : " + (result.message || "Réessayez plus tard."));
+        showMessage("❌ Erreur serveur : " + (result.message || "Réessayez plus tard."));
       }
     })
     .catch(error => {
-      alert("🚫 Erreur de connexion : " + error.message);
+      showMessage("🚫 Erreur de connexion : " + error.message);
       console.error("Erreur de requête:", error);
     });
 }
