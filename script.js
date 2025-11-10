@@ -284,7 +284,7 @@ function displayProduits(data) {
   sections.forEach(section => {
     const sectionId = generateSectionId(section);
     const h2 = document.createElement('h2');
-    h2.textContent = section.toUpperCase(); // <-- Ajouté pour mettre le titre en majuscule
+    h2.textContent = section.toUpperCase();
     h2.id = sectionId;
     container.appendChild(h2);
 
@@ -295,82 +295,79 @@ function displayProduits(data) {
     data
       .filter(p => p.section === section)
       .forEach(produit => {
-       const div = document.createElement('div');
-const hasImage = produit.image && produit.image.trim() !== '';
-div.className = "article produit-ligne" + (hasImage ? "" : " no-image");
+        const div = document.createElement('div');
+        const hasImage = produit.image && produit.image.trim() !== '';
+        div.className = "article produit-ligne" + (hasImage ? "" : " no-image");
 
         const descriptionHtml = produit.description.replace(/\n/g, '<br>');
         const descriptionParam = encodeURIComponent(produit.description);
 
         div.innerHTML = `
           ${hasImage ? `
-  <div class="article-image">
-    <img src="${escapeHtml(produit.image)}" 
-         alt="${escapeHtml(produit.nom)}" 
-         onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}')">
-  </div>
-` : ''}
-
+            <div class="article-image">
+              <img src="${escapeHtml(produit.image)}" 
+                   alt="${escapeHtml(produit.nom)}" 
+                   onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}', '${escapeHtml(produit.section)}')">
+            </div>
+          ` : ''}
 
           <div class="article-details">
-            <h3 style="text-transform: uppercase" onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}')">${escapeHtml(produit.nom)}</h3>
-
-            
+            <h3 style="text-transform: uppercase" 
+                onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}', '${escapeHtml(produit.section)}')">
+                ${escapeHtml(produit.nom)}
+            </h3>
 
             <div class="details">
-  ${produit.prix ? (() => {
-  try {
-    if (produit.prix.includes('-')) {
-      const [oldPrice, newPrice] = produit.prix.split('-').map(p => escapeHtml(p.trim()));
-      return `
-        <div class="price-container">
-          <span class="old-price">R$ ${oldPrice}</span>
-          <span class="new-price">R$ ${newPrice}</span>
-        </div>
-      `;
-    }
-    return `<p>R$ <strong>${escapeHtml(produit.prix)}</strong></p>`;
-  } catch (e) {
-    return `<p>R$ <strong>${escapeHtml(produit.prix)}</strong></p>`;
-  }
-})() : ''}
+              ${produit.prix ? (() => {
+                try {
+                  if (produit.prix.includes('-')) {
+                    const [oldPrice, newPrice] = produit.prix.split('-').map(p => escapeHtml(p.trim()));
+                    return `
+                      <div class="price-container">
+                        <span class="old-price">R$ ${oldPrice}</span>
+                        <span class="new-price">R$ ${newPrice}</span>
+                      </div>`;
+                  }
+                  return `<p>R$ <strong>${escapeHtml(produit.prix)}</strong></p>`;
+                } catch (e) {
+                  return `<p>R$ <strong>${escapeHtml(produit.prix)}</strong></p>`;
+                }
+              })() : ''}
 
-${(() => {
-  let note = '';
-  let taillesNettoyees = produit.tailles;
+              ${(() => {
+                let note = '';
+                let taillesNettoyees = produit.tailles;
+                const match = produit.tailles.match(/\(([^)]+)\)/);
+                if (match) {
+                  note = match[1];
+                  taillesNettoyees = produit.tailles.replace(/\([^)]*\)/g, '').trim();
+                }
 
-  // Extraire le texte entre parenthèses (s'il existe)
-  const match = produit.tailles.match(/\(([^)]+)\)/);
-  if (match) {
-    note = match[1];
-    taillesNettoyees = produit.tailles.replace(/\([^)]*\)/g, '').trim();
-  }
+                const taillesArray = taillesNettoyees.split(',')
+                  .map(t => t.trim())
+                  .filter(t => t !== '');
 
-  // Séparer et formater les tailles avec encadrement
-  const taillesArray = taillesNettoyees.split(',')
-    .map(t => t.trim())
-    .filter(t => t !== '');
+                const taillesEncadrees = taillesArray.map(taille => 
+                  `<span class="taille-encadree">🔹 ${escapeHtml(taille)}</span>`
+                ).join(' ');
 
-  const taillesEncadrees = taillesArray.map(taille => 
-  `<span class="taille-encadree">🔹 ${escapeHtml(taille)}</span>`
-).join(' ');
-
-  return `
-    ${note ? `<p class="note-text"><strong>${escapeHtml(note)}</strong></p>` : ''}
-    ${taillesArray.length > 0 ? `
-      <div class="tailles-container">
-        ${taillesEncadrees}
-      </div>
-    ` : ''}
-  `;
-})()}
-<br>
-            <button class="open-button" onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}')">Solicite/Realise</button>
-            
-          
-
+                return `
+                  ${note ? `<p class="note-text"><strong>${escapeHtml(note)}</strong></p>` : ''}
+                  ${taillesArray.length > 0 ? `
+                    <div class="tailles-container">
+                      ${taillesEncadrees}
+                    </div>` : ''}
+                `;
+              })()}
+              <br>
+              <button class="open-button" 
+                onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}', '${escapeHtml(produit.section)}')">
+                Solicite/Realise
+              </button>
+            </div>
           </div>
         `;
+
         sectionContainer.appendChild(div);
       });
   });
@@ -382,9 +379,7 @@ ${(() => {
 
   if (window.location.hash) {
     const sectionId = window.location.hash.substring(1);
-    setTimeout(() => {
-      scrollToSection(sectionId);
-    }, 300);
+    setTimeout(() => scrollToSection(sectionId), 300);
   }
 }
 
@@ -493,19 +488,39 @@ ${(() => {
     
     
     /* Fonctions pour la galerie d'images */
-  function showPopup(imageUrl, nom, description, prix, tailles, code, hideWhatsappButton = false) {
-  // Supprimer la première image de la galerie
-  imageUrls = imageUrl.split(',').map(url => url.trim()).slice(1); // 👈 ici
-  
-  currentImageIndex = 0;
-  document.getElementById("popup").style.display = "flex";
+ function showPopup(imageUrl, nom, description, prix, tailles, code, section, hideWhatsappButton = false) {
+  const popup = document.getElementById("popup");
+  const popupImage = document.getElementById("popup-image");
+  const popupTitle = document.getElementById("popup-title");
+  const popupDescription = document.getElementById("popup-description");
+  const popupPrice = document.getElementById("popup-price");
+  const sizesContainer = document.getElementById("sizes-container");
+  const whatsappButton = document.getElementById("whatsapp-button");
 
-  // Supprimer les textes entre parenthèses dans "tailles"
-  const cleanedTailles = tailles.replace(/\([^)]*\)/g, '').trim();
-  const sizesArray = cleanedTailles.split(',').map(size => size.trim()).filter(size => size !== '');
+  // Nettoyer le contenu précédent
+  popupImage.src = imageUrl;
+  popupTitle.textContent = nom;
+  popupDescription.innerHTML = decodeURIComponent(description).replace(/\n/g, "<br>");
+  popupPrice.textContent = prix ? `R$ ${prix}` : "";
+  sizesContainer.innerHTML = "";
+
+  const sizesArray = tailles.split(',').map(t => t.trim()).filter(t => t !== '');
   const hasMultipleSizes = sizesArray.length > 1;
 
-  // Stocker les détails du produit dans la variable globale
+  // Création des boutons de tailles
+  sizesArray.forEach(size => {
+    const sizeBtn = document.createElement("button");
+    sizeBtn.textContent = size;
+    sizeBtn.classList.add("size-button");
+    sizeBtn.onclick = () => {
+      document.querySelectorAll(".size-button").forEach(b => b.classList.remove("selected"));
+      sizeBtn.classList.add("selected");
+      currentProduct.selectedSize = size;
+    };
+    sizesContainer.appendChild(sizeBtn);
+  });
+
+  // ✅ Stocker toutes les infos du produit
   currentProduct = {
     imageUrl,
     nom,
@@ -513,99 +528,15 @@ ${(() => {
     prix,
     tailles,
     code,
+    section, // <--- nouvelle propriété
     selectedSize: hasMultipleSizes ? null : sizesArray[0]
   };
 
-  updateGallery();
-
-  let sizesHTML = '';
-  if (hasMultipleSizes) {
-    sizesHTML = `
-  <p></p>
-  <div class="sizes-list" id="sizes-container">
-    ${sizesArray.map(size => `
-      <span class="size-item" onclick="selectSize(this, '${escapeHtml(size)}')">${escapeHtml(size)}</span>
-    `).join('')}
-  </div>
-`;
-  } else if (sizesArray.length === 1) {
-    sizesHTML = `
-      <p><strong>${escapeHtml(sizesArray[0])}</strong></p>
-    `;
-  } else {
-    sizesHTML = ``;
-  }
-
-  // Mettre à jour le contenu du popup
-  document.getElementById("popup-details").innerHTML = `
-    <h4>${escapeHtml(nom)}</h4>
-    
-    ${prix?.trim() ? (() => {
-      // Vérifie si le prix contient un séparateur "-"
-      if (prix.includes('-')) {
-        const [oldPrice, newPrice] = prix.split('-').map(p => p.trim());
-        return `
-          <div class="price-highlight">
-            <div class="dual-price-container">
-              <div class="old-price">
-                <span class="currency-symbol">R$</span>
-                <span class="price-amount">${escapeHtml(oldPrice)}</span>
-              </div>
-              <div class="new-price">
-                <span class="currency-symbol">R$</span>
-                <span class="price-amount">${escapeHtml(newPrice)}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      // Cas normal (un seul prix)
-      return `
-        <div class="price-highlight">
-          <span class="currency-symbol">R$</span>
-          <span class="price-amount">${escapeHtml(prix)}</span>
-        </div>
-      `;
-    })() : ''}
-    
-    <div>
-      ${sizesHTML}
-    </div>
-    
-    
-
-    <div">
-      <strong>Solicite ou realize este serviço no Whatsapp:</strong>
-    </div>
-     <br>
-    <a href="#" id="whatsappButton" class="whatsapp-btn" onclick="event.preventDefault(); sendWhatsAppMessage();">
-      <i class="fab fa-whatsapp"></i> WhatsApp
-    </a>
-<br>
-    <div">
-      <strong>Descrição:</strong>
-      <div class="description-text" color: #0081fe;">
-        ${decodeURIComponent(description).replace(/\n/g, '<br>')}
-      </div>
-    </div>
-  `;
-
-  // Afficher ou masquer le bouton WhatsApp selon le paramètre
-  const whatsappButton = document.getElementById("whatsappButton");
-  if (hideWhatsappButton) {
-    whatsappButton.style.display = "none";
-  } else {
-    whatsappButton.style.display = "inline-block";
-  }
-
-  // Sélection automatique de la taille si une seule
-  if (!hasMultipleSizes && sizesArray.length === 1) {
-    const sizeElements = document.querySelectorAll('.size-item');
-    if (sizeElements.length > 0) {
-      sizeElements[0].classList.add('selected');
-    }
-  }
+  // Gérer le bouton WhatsApp
+  whatsappButton.style.display = hideWhatsappButton ? "none" : "block";
+  popup.style.display = "flex";
 }
+
 
     
        function updateGallery() {
