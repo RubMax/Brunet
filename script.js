@@ -307,13 +307,13 @@ div.className = "article produit-ligne" + (hasImage ? "" : " no-image");
   <div class="article-image">
     <img src="${escapeHtml(produit.image)}" 
          alt="${escapeHtml(produit.nom)}" 
-         onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}', '${escapeHtml(produit.section)}')">
+         onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}')">
   </div>
 ` : ''}
 
 
           <div class="article-details">
-            <h3 style="text-transform: uppercase" onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}')">${escapeHtml(produit.nom)}', '${escapeHtml(produit.section)'}</h3>
+            <h3 style="text-transform: uppercase" onclick="showPopup('${escapeHtml(produit.image)}', '${escapeHtml(produit.nom)}', '${descriptionParam}', '${escapeHtml(produit.prix)}', '${escapeHtml(produit.tailles)}', '${escapeHtml(produit.code)}')">${escapeHtml(produit.nom)}</h3>
 
             
 
@@ -388,8 +388,6 @@ ${(() => {
   }
 }
 
-
- 
 
     
     
@@ -495,39 +493,19 @@ ${(() => {
     
     
     /* Fonctions pour la galerie d'images */
- function showPopup(imageUrl, nom, description, prix, tailles, code, section, hideWhatsappButton = false) {
-  const popup = document.getElementById("popup");
-  const popupImage = document.getElementById("popup-image");
-  const popupTitle = document.getElementById("popup-title");
-  const popupDescription = document.getElementById("popup-description");
-  const popupPrice = document.getElementById("popup-price");
-  const sizesContainer = document.getElementById("sizes-container");
-  const whatsappButton = document.getElementById("whatsapp-button");
+  function showPopup(imageUrl, nom, description, prix, tailles, code, hideWhatsappButton = false) {
+  // Supprimer la première image de la galerie
+  imageUrls = imageUrl.split(',').map(url => url.trim()).slice(1); // 👈 ici
+  
+  currentImageIndex = 0;
+  document.getElementById("popup").style.display = "flex";
 
-  // Nettoyer le contenu précédent
-  popupImage.src = imageUrl;
-  popupTitle.textContent = nom;
-  popupDescription.innerHTML = decodeURIComponent(description).replace(/\n/g, "<br>");
-  popupPrice.textContent = prix ? `R$ ${prix}` : "";
-  sizesContainer.innerHTML = "";
-
-  const sizesArray = tailles.split(',').map(t => t.trim()).filter(t => t !== '');
+  // Supprimer les textes entre parenthèses dans "tailles"
+  const cleanedTailles = tailles.replace(/\([^)]*\)/g, '').trim();
+  const sizesArray = cleanedTailles.split(',').map(size => size.trim()).filter(size => size !== '');
   const hasMultipleSizes = sizesArray.length > 1;
 
-  // Création des boutons de tailles
-  sizesArray.forEach(size => {
-    const sizeBtn = document.createElement("button");
-    sizeBtn.textContent = size;
-    sizeBtn.classList.add("size-button");
-    sizeBtn.onclick = () => {
-      document.querySelectorAll(".size-button").forEach(b => b.classList.remove("selected"));
-      sizeBtn.classList.add("selected");
-      currentProduct.selectedSize = size;
-    };
-    sizesContainer.appendChild(sizeBtn);
-  });
-
-  // ✅ Stocker toutes les infos du produit
+  // Stocker les détails du produit dans la variable globale
   currentProduct = {
     imageUrl,
     nom,
@@ -535,15 +513,99 @@ ${(() => {
     prix,
     tailles,
     code,
-    section, // <--- nouvelle propriété
     selectedSize: hasMultipleSizes ? null : sizesArray[0]
   };
 
-  // Gérer le bouton WhatsApp
-  whatsappButton.style.display = hideWhatsappButton ? "none" : "block";
-  popup.style.display = "flex";
-}
+  updateGallery();
 
+  let sizesHTML = '';
+  if (hasMultipleSizes) {
+    sizesHTML = `
+  <p></p>
+  <div class="sizes-list" id="sizes-container">
+    ${sizesArray.map(size => `
+      <span class="size-item" onclick="selectSize(this, '${escapeHtml(size)}')">${escapeHtml(size)}</span>
+    `).join('')}
+  </div>
+`;
+  } else if (sizesArray.length === 1) {
+    sizesHTML = `
+      <p><strong>${escapeHtml(sizesArray[0])}</strong></p>
+    `;
+  } else {
+    sizesHTML = ``;
+  }
+
+  // Mettre à jour le contenu du popup
+  document.getElementById("popup-details").innerHTML = `
+    <h4>${escapeHtml(nom)}</h4>
+    
+    ${prix?.trim() ? (() => {
+      // Vérifie si le prix contient un séparateur "-"
+      if (prix.includes('-')) {
+        const [oldPrice, newPrice] = prix.split('-').map(p => p.trim());
+        return `
+          <div class="price-highlight">
+            <div class="dual-price-container">
+              <div class="old-price">
+                <span class="currency-symbol">R$</span>
+                <span class="price-amount">${escapeHtml(oldPrice)}</span>
+              </div>
+              <div class="new-price">
+                <span class="currency-symbol">R$</span>
+                <span class="price-amount">${escapeHtml(newPrice)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      // Cas normal (un seul prix)
+      return `
+        <div class="price-highlight">
+          <span class="currency-symbol">R$</span>
+          <span class="price-amount">${escapeHtml(prix)}</span>
+        </div>
+      `;
+    })() : ''}
+    
+    <div>
+      ${sizesHTML}
+    </div>
+    
+    
+
+    <div">
+      <strong>Solicite ou realize este serviço no Whatsapp:</strong>
+    </div>
+     <br>
+    <a href="#" id="whatsappButton" class="whatsapp-btn" onclick="event.preventDefault(); sendWhatsAppMessage();">
+      <i class="fab fa-whatsapp"></i> WhatsApp
+    </a>
+<br>
+    <div">
+      <strong>Descrição:</strong>
+      <div class="description-text" color: #0081fe;">
+        ${decodeURIComponent(description).replace(/\n/g, '<br>')}
+      </div>
+    </div>
+  `;
+
+  // Afficher ou masquer le bouton WhatsApp selon le paramètre
+  const whatsappButton = document.getElementById("whatsappButton");
+  if (hideWhatsappButton) {
+    whatsappButton.style.display = "none";
+  } else {
+    whatsappButton.style.display = "inline-block";
+  }
+
+  // Sélection automatique de la taille si une seule
+  if (!hasMultipleSizes && sizesArray.length === 1) {
+    const sizeElements = document.querySelectorAll('.size-item');
+    if (sizeElements.length > 0) {
+      sizeElements[0].classList.add('selected');
+    }
+  }
+}
 
     
        function updateGallery() {
@@ -815,9 +877,40 @@ function loadAgents() {
     });
 }
 
+function validateClientData(clientData) {
+  // Vérifier que tous les champs existent
+  if (!clientData.nom || clientData.nom.trim().length < 2) {
+    return { valid: false, message: "Veuillez entrer un nom valide (minimum 2 caractères)." };
+  }
+
+  // Vérifier le téléphone (seulement chiffres, minimum 8)
+  const telRegex = /^[0-9]{8,15}$/;
+  if (!telRegex.test(clientData.tel)) {
+    return { valid: false, message: "Veuillez entrer un numéro de téléphone valide (8 à 15 chiffres)." };
+  }
+
+  // Vérifier l'email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(clientData.email)) {
+    return { valid: false, message: "Veuillez entrer une adresse e-mail valide." };
+  }
+
+  // Vérifier l'agent sélectionné
+  if (!clientData.agent || clientData.agent === "Choisir un agent") {
+    return { valid: false, message: "Veuillez sélectionner un agent." };
+  }
+
+  return { valid: true };
+}
+
 // Fonction pour enregistrer le client
-// ✅ Fonction pour enregistrer le client
 function registerClient(clientData) {
+  const validation = validateClientData(clientData);
+  if (!validation.valid) {
+    alert(validation.message);
+    return Promise.resolve({ success: false, message: validation.message });
+  }
+
   const SAVE_URL = `https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec` +
     `?action=saveClient&nom=${encodeURIComponent(clientData.nom)}` +
     `&tel=${encodeURIComponent(clientData.tel)}` +
@@ -842,49 +935,13 @@ function registerClient(clientData) {
     });
 }
 
-// ✅ Fonction de validation visuelle
-function validateFormInputs(formData) {
-  let valid = true;
 
-  // Réinitialiser les styles avant chaque validation
-  const fields = ['nom', 'tel', 'email', 'agent'];
-  fields.forEach(id => {
-    const field = document.getElementById(id);
-    if (field) field.style.border = '1px solid #ccc';
-  });
-
-  // Vérifier chaque champ et colorer en rouge si incorrect
-  if (!formData.nom || formData.nom.trim().length < 2) {
-    document.getElementById('nom').style.border = '2px solid red';
-    valid = false;
-  }
-
-  const telRegex = /^[0-9]{8,15}$/;
-  if (!telRegex.test(formData.tel)) {
-    document.getElementById('tel').style.border = '2px solid red';
-    valid = false;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(formData.email)) {
-    document.getElementById('email').style.border = '2px solid red';
-    valid = false;
-  }
-
-  if (!formData.agent || formData.agent === 'Choisir un agent') {
-    document.getElementById('agent').style.border = '2px solid red';
-    valid = false;
-  }
-
-  return valid;
-}
-
-// ✅ Vérifie si déjà enregistré
+// Fonction pour vérifier si déjà enregistré
 function checkRegistration() {
   return localStorage.getItem('clientRegistered') === 'true';
 }
 
-// ✅ Message de confirmation/erreur
+// Fonction pour afficher le message
 function showRegisterMessage(message, isError = false) {
   const messageEl = document.getElementById('register-message');
   messageEl.textContent = message;
@@ -894,75 +951,71 @@ function showRegisterMessage(message, isError = false) {
   messageEl.style.border = isError ? '1px solid #ffcdd2' : '1px solid #c8e6c9';
 }
 
-// ✅ Initialisation de l’enregistrement
+// Initialisation de l'enregistrement
 function initRegistration() {
-  const popup = document.getElementById('register-popup');
-  const form = document.getElementById('register-form');
-  const messageEl = document.getElementById('register-message');
-
-  if (!popup || !form) {
-    console.error("❌ Erreur : le popup d'enregistrement est introuvable dans le HTML.");
-    return;
-  }
-
+  // Vérifier si déjà enregistré
   if (checkRegistration()) {
-    popup.style.display = 'none';
+    document.getElementById('register-popup').style.display = 'none';
     document.body.classList.remove('registration-pending');
     return;
   }
-
-  popup.style.display = 'flex';
+  
+  // Afficher le popup d'enregistrement
+  document.getElementById('register-popup').style.display = 'flex';
   document.body.classList.add('registration-pending');
+  
+  // Charger la liste des agents
   loadAgents();
-
-  form.addEventListener('submit', function (e) {
+  
+  // Gérer la soumission du formulaire
+  document.getElementById('register-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    messageEl.style.display = 'none';
-
+    
     const formData = {
       nom: document.getElementById('nom').value.trim(),
       tel: document.getElementById('tel').value.trim(),
       email: document.getElementById('email').value.trim(),
       agent: document.getElementById('agent').value
     };
-
-    // ✅ Validation visuelle
-    if (!validateFormInputs(formData)) {
-      showRegisterMessage('⚠️ Veuillez corriger les champs en rouge avant de continuer.', true);
+    
+    // Validation basique
+    if (!formData.nom || !formData.tel) {
+      showRegisterMessage('Veuillez remplir les champs obligatoires (Nom et Téléphone)', true);
       return;
     }
-
-    // 🔄 Désactiver le bouton pendant l’enregistrement
+    
+    // Désactiver le bouton pendant l'enregistrement
     const submitBtn = document.querySelector('.register-btn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enregistrement...';
-
-    // 📩 Envoi vers le serveur
+    
+    // Enregistrer le client
     registerClient(formData)
       .then(result => {
-        if (result.success) {
-          showRegisterMessage('✅ Enregistrement réussi ! Accès à l\'application...', false);
-          setTimeout(() => {
-            popup.style.display = 'none';
-            document.body.classList.remove('registration-pending');
-            loadMainApp();
-          }, 1500);
-        } else {
-          showRegisterMessage('❌ Erreur : ' + (result.message || 'Veuillez réessayer.'), true);
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Accéder à l\'application';
-        }
+        showRegisterMessage('Enregistrement réussi! Accès à l\'application...', false);
+        
+        // Rediriger après un court délai
+        setTimeout(() => {
+          document.getElementById('register-popup').style.display = 'none';
+          document.body.classList.remove('registration-pending');
+          
+          // Charger l'application principale
+          loadMainApp();
+        }, 1500);
       })
       .catch(error => {
-        showRegisterMessage('🚫 Erreur : ' + error.message, true);
+        showRegisterMessage('Erreur: ' + error.message, true);
+        
+        // Réactiver le bouton
         submitBtn.disabled = false;
         submitBtn.textContent = 'Accéder à l\'application';
       });
   });
 }
 
-// ✅ Chargement principal de l’app (inchangé)
+// Fonction pour charger l'application principale
 function loadMainApp() {
+  // Votre code de chargement existant ici
   const BASE = "https://script.google.com/macros/s/AKfycbzDeSDfYzb_953duQ-HuubILeZfzoRrtNe7d2Z7MEQbvVH9tzFZ1Dm0xTSHyZEgl7BIzg/exec";
   const logoUrlAPI = BASE + "?page=logo";
   const dataUrlAPI = BASE + "?page=api";
@@ -970,34 +1023,38 @@ function loadMainApp() {
   const fetchText = (url) => fetch(url, { cache: "no-store" }).then(r => r.text());
   const fetchJSON = (url) => fetch(url, { cache: "no-store" }).then(r => r.json());
 
+  const waitForImageLoad = (imgUrl, imgEl) => new Promise((resolve) => {
+    if (!imgUrl) return resolve("no-url");
+    const test = new Image();
+    test.onload = () => { imgEl.src = imgUrl; resolve("ok"); };
+    test.onerror = () => { imgEl.alt = "Logo indisponible"; resolve("error"); };
+    test.src = imgUrl;
+  });
+
   const loader = document.getElementById("page-loader");
   const app = document.getElementById("app");
   const logoEl = document.getElementById("logo");
 
+  // Afficher le loader pendant le chargement
   loader.style.display = "flex";
   app.classList.remove("app-ready");
 
   Promise.all([
-    fetchText(logoUrlAPI).then(url => {
-      const test = new Image();
-      return new Promise(resolve => {
-        test.onload = () => { logoEl.src = url; resolve("ok"); };
-        test.onerror = () => resolve("error");
-        test.src = url;
-      });
-    }),
+    fetchText(logoUrlAPI).then(url => waitForImageLoad(url, logoEl)),
     fetchJSON(dataUrlAPI)
   ])
-    .then(([_, data]) => {
-      if (typeof displayProducts === "function") displayProducts(data);
-    })
-    .catch(err => {
-      console.error("Erreur lors du chargement :", err);
-      document.getElementById("produits").innerHTML =
-        "<div class='alert alert-danger'>Erreur de chargement des données</div>";
-    })
-    .finally(() => {
-      loader.style.display = "none";
-      app.classList.add("app-ready");
-    });
+  .then(([logoStatus, data]) => {
+    if (typeof displayProducts === "function") {
+      displayProducts(data);
+    }
+  })
+  .catch(err => {
+    console.error("Erreur lors du chargement :", err);
+    document.getElementById("produits").innerHTML = 
+      "<div class='alert alert-danger'>Erreur de chargement des données</div>";
+  })
+  .finally(() => {
+    loader.style.display = "none";
+    app.classList.add("app-ready");
+  });
 }
